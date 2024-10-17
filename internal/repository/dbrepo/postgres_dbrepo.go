@@ -22,14 +22,14 @@ func (m *PostgresDBRepo) AllMovies() ([]*models.Movie, error) {
 	defer cancel()
 
 	query := `
-		select 
+		select
 			id, title, release_date, runtime,
 			mpaa_rating, description, coalesce(image, ''),
 			created_at, updated_at
-		from 
+		from
 			movies
-		order by 
-			title asc
+		order by
+			title
 	`
 
 	rows, err := m.DB.QueryContext(ctx, query)
@@ -53,7 +53,6 @@ func (m *PostgresDBRepo) AllMovies() ([]*models.Movie, error) {
 			&movie.CreatedAt,
 			&movie.UpdatedAt,
 		)
-
 		if err != nil {
 			return nil, err
 		}
