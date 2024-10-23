@@ -211,7 +211,7 @@ func (app *application) InsertMovie(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// try to get image
+	// try to get an image
 	movie = app.getPoster(movie)
 
 	movie.CreatedAt = time.Now()
@@ -223,7 +223,7 @@ func (app *application) InsertMovie(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// handle genres
+	// now handle genres
 	err = app.DB.UpdateMovieGenres(newID, movie.GenresArray)
 	if err != nil {
 		app.errorJSON(w, err)
@@ -235,7 +235,7 @@ func (app *application) InsertMovie(w http.ResponseWriter, r *http.Request) {
 		Message: "movie updated",
 	}
 
-	app.writeJSON(w, http.StatusOK, resp)
+	app.writeJSON(w, http.StatusAccepted, resp)
 }
 
 func (app *application) getPoster(movie models.Movie) models.Movie {
@@ -249,6 +249,8 @@ func (app *application) getPoster(movie models.Movie) models.Movie {
 
 	client := &http.Client{}
 	theUrl := fmt.Sprintf("https://api.themoviedb.org/3/search/movie?api_key=%s", app.APIKey)
+
+	// https://api.themoviedb.org/3/search/movie?api_key=b41447e6319d1cd467306735632ba733&query=Die+Hard
 
 	req, err := http.NewRequest("GET", theUrl+"&query="+url.QueryEscape(movie.Title), nil)
 	if err != nil {
@@ -281,4 +283,46 @@ func (app *application) getPoster(movie models.Movie) models.Movie {
 	}
 
 	return movie
+}
+
+func (app *application) UpdateMovie(w http.ResponseWriter, r *http.Request) {
+	var payload models.Movie
+
+	err := app.readJSON(w, r, &payload)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	movie, err := app.DB.OneMovie(payload.ID)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	movie.Title = payload.Title
+	movie.ReleaseDate = payload.ReleaseDate
+	movie.Description = payload.Description
+	movie.MPAARating = payload.MPAARating
+	movie.RunTime = payload.RunTime
+	movie.UpdatedAt = time.Now()
+
+	err = app.DB.UpdateMovie(*movie)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = app.DB.UpdateMovieGenres(movie.ID, payload.GenresArray)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	resp := JSONResponse{
+		Error:   false,
+		Message: "movie updated",
+	}
+
+	app.writeJSON(w, http.StatusAccepted, resp)
 }

@@ -38,12 +38,11 @@ func main() {
 	flag.StringVar(&app.APIKey, "api-key", "30474a68840929ea266367dce3e37875", "api key")
 	flag.Parse()
 
-	// connect to database
+	// connect to the database
 	conn, err := app.connectToDB()
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	app.DB = &dbrepo.PostgresDBRepo{DB: conn}
 	defer app.DB.Connection().Close()
 
@@ -54,13 +53,13 @@ func main() {
 		TokenExpiry:   time.Minute * 15,
 		RefreshExpiry: time.Hour * 24,
 		CookiePath:    "/",
-		CookieName:    "refresh_token",
+		CookieName:    "Host-refresh_token",
 		CookieDomain:  app.CookieDomain,
 	}
 
-	log.Println("Starting the application on port", port)
+	log.Println("Starting application on port", port)
 
-	// start web server
+	// start a web server
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), app.routes())
 	if err != nil {
 		log.Fatal(err)
